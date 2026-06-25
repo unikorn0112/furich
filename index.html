@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>馥韻容光｜活動報名</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-900 bg-opacity-40 flex justify-center items-center min-h-screen p-4">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transform transition-all">
+    
+    <div class="p-5 border-b border-gray-100 text-center relative mt-2">
+      <div class="text-xs text-gray-400 mb-1">unikorn0112.github.io</div>
+      <h1 class="text-2xl font-bold text-gray-800 tracking-wide">全齡溫養課程報名</h1>
+      <button onclick="liff.closeWindow()" class="absolute right-6 top-6 text-gray-400 hover:text-gray-600 text-xl transition">✕</button>
+    </div>
+
+    <div class="p-6 space-y-6 flex-grow">
+      
+      <div>
+        <label class="block text-gray-800 font-bold text-base mb-2">
+          姓名 <span class="text-red-500 text-sm font-normal">(請填寫正確大名，方便核對)</span>
+        </label>
+        <input type="text" id="userName" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" placeholder="陳民慶 | Chris">
+      </div>
+
+      <div>
+        <label class="block text-gray-800 font-bold text-base mb-2">電話</label>
+        <input type="tel" id="userPhone" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" placeholder="請輸入聯絡電話">
+      </div>
+
+      <div>
+        <label class="block text-gray-800 font-bold text-base mb-2">報名課程</label>
+        <div class="relative">
+          <select id="courseSelect" onchange="handleCourseChange()" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition appearance-none cursor-pointer">
+            <option value="">請選擇報名課程</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+            ▼
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-gray-800 font-bold text-base mb-2">選擇場次</label>
+        <div class="relative">
+          <select id="timeSelect" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-700 bg-gray-100 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-600 transition appearance-none cursor-pointer" disabled>
+            <option value="">請先選擇課程</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+            ▼
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 pt-2 mb-2">
+      <button id="submitBtn" onclick="submitForm()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-green-700 active:bg-green-800 transition duration-150 shadow-md block text-center tracking-wider">
+        確認提交
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ⚙️ 【核心配置區】
+    // 這裡已經帶入你專屬的 GAS API 網址
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbysgp4uHsRaGjII7g9SuFwED4p6iXIdj7nNEEI8Bs_pGvl6tue8Y-YXIXUnmN8TcNA/exec";
+    
+    // ⚠️ 備忘：請在取得 LINE Developer 後台的 LIFF ID 後，填入下方引號中
+    const LIFF_ID = "請在此填入你的LINELIFFID";
+
+    let allCourses = []; // 用於暫存從後台撈過來的所有完整場次清單
+    let userLineId = ""; // 用於儲存點開表單的學員 LINE userId
+
+    // 【1. 初始化 LIFF SDK】
+    async function initLiff() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login(); // 如果學員沒登入，自動導向 LINE 登入
+        } else {
+          const profile = await liff.getProfile();
+          userLineId = profile.userId; // 成功抓取學員的唯一 LINE ID
+          fetchActiveCourses(); // 驗證成功後，立刻執行向 GAS 撈取當前上架場次
+        }
+      } catch (error) {
+        console.error("LIFF 初始化失敗", error);
+      }
+    }
+
+    // 【2. 從 GAS 撈取上架中的場次資料】
+    async function fetchActiveCourses() {
+      try {
+        // 向 GAS 發送請求，並告知只需要「狀態為上架」的課程
+        const res = await fetch(`${GAS_URL}?action=getCourses&onlyActive=true`);
+        const result = await res.json();
+        if (result.success) {
+          allCourses = result.data; // 將拿到的資料存入陣列
+          renderCourseSelect();     // 執行渲染「報名課程」下拉選單
+        }
+      } catch (err) {
+        alert("撈取線上場次清單失敗，請確認 GAS 是否有成功對外公開部署。");
+      }
+    }
+
+    // 【3. 渲染『報名課程』下拉選單】
+    function renderCourseSelect() {
+      const courseSelect = document.getElementById('courseSelect');
+      // 使用 Set 機制過濾掉重複的課程名稱（例如有三場DIY課，選單裡只會出現一個項目）
+      const uniqueTitles = [...new Set(allCourses.map(c => c.courseName))];
+      
+      uniqueTitles.forEach(title => {
+        const opt = document.createElement('option');
+        opt.value = title;
+        opt.textContent = title;
+        courseSelect.appendChild(opt);
+      });
+    }
+
+    // 【4. 連動觸發：當學員選好某個課程時，解鎖並渲染對應的『活動場次/時間』】
+    function handleCourseChange() {
+      const selectedCourse = document.getElementById('courseSelect').value;
+      const timeSelect = document.getElementById('timeSelect');
+      
+      // 先清空場次選單的舊資料
+      timeSelect.innerHTML = '<option value="">請選擇場次時間</option>';
+      
+      if (!selectedCourse) {
+        timeSelect.disabled = true;
+        timeSelect.classList.add('bg-gray-100');
+        return;
+      }
+
+      // 篩選出符合該課程名稱的所有可選時間
+      const filteredTimes = allCourses.filter(c => c.courseName === selectedCourse);
+      filteredTimes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.courseTime;
+        opt.dataset.price = c.price; // 將該場次的金額藏在 option 的 dataset 屬性中，方便後續產出憑證
+        opt.textContent = `${c.courseTime} (NT$ ${c.price})`;
+        timeSelect.appendChild(opt);
+      });
+      timeSelect.disabled = false; // 解鎖選單
+      timeSelect.classList.remove('bg-gray-100');
+    }
+
+    // 【5. 按鈕點擊：處理表單提交、寫入試算表並發送 Flex Message 憑證】
+    async function submitForm() {
+      const name = document.getElementById('userName').value.trim();
+      const phone = document.getElementById('userPhone').value.trim();
+      const courseName = document.getElementById('courseSelect').value;
+      const timeSelect = document.getElementById('timeSelect');
+      const courseTime = timeSelect.value;
+      
+      // 簡單的前端防呆驗證
+      if (!name || !phone || !courseName || !courseTime) {
+        alert("請確認所有報名資料欄位皆已輸入或選擇！");
+        return;
+      }
+
+      // 取得剛才隱藏在屬性中的場次價格
+      const selectedOption = timeSelect.options[timeSelect.selectedIndex];
+      const price = selectedOption.dataset.price || "520";
+
+      // 進入讀取狀態，防範學員手速太快重複點擊按鈕
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "資料提交中...";
+
+      // 打包準備發送給 GAS POST API 的 JSON 格式
+      const payload = {
+        action: "submitRegistration",
+        data: { name, phone, courseName, courseTime, lineId: userLineId }
+      };
+
+      try {
+        // A. 第一步：將資料送回 GAS 寫入 Google 試算表
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          // B. 第二步：試算表存檔成功後，動態生成符合參考圖二視覺的植物系深綠色憑證
+          const flexPayload = generateFlexPayload(courseName, courseTime, price);
+          
+          // C. 第三步：呼叫 LIFF SDK，直接以學員身分在 LINE 對話視窗發送這張憑證
+          await liff.sendMessages([
+            {
+              type: "flex",
+              altText: "【馥韻容光】活動報名憑證已送達！",
+              contents: flexPayload
+            }
+          ]);
+          
+          // 發送成功後關閉 LIFF 視窗，讓學員完美回歸聊天室並看見憑證
+          liff.closeWindow(); 
+        } else {
+          alert("報名系統暫時無回應，請重新點擊提交。");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "確認提交";
+        }
+      } catch (err) {
+        console.error(err);
+        alert("網路連線逾時，但資料可能已處理。請檢查 LINE 聊天室是否收到憑證。");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "確認提交";
+      }
+    }
+
+    // 【6. Flex Message 樣式模板產出器（對齊參考圖二設計）】
+    function generateFlexPayload(title, timeStr, price) {
+      let datePart = "當日";
+      let timePart = timeStr;
+      
+      // 將時間字串自動切分（例如後台設定："4/19 (日) 14:00 ~ 16:00" ➡️ 切出日期與時間區段）
+      if(timeStr.includes(" ")) {
+        const parts = timeStr.split(" ");
+        datePart = parts[0] + (parts[1] ? " " + parts[1] : "");
+        timePart = parts.slice(2).join(" ") || timeStr;
+      }
+
+      return {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+          "type": "box", "layout": "vertical",
+          "contents": [
+            { "type": "text", "text": "活動憑證", "color": "#FFFFFFB3", "size": "sm", "align": "center" },
+            { "type": "text", "text": "馥韻容光", "weight": "bold", "color": "#FFFFFF", "size": "xxl", "align": "center", "margin": "sm" },
+            { "type": "text", "text": `「 ${title} 」`, "color": "#FCD535", "size": "md", "align": "center", "margin": "md", "weight": "bold" },
+            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" }
+          ],
+          "backgroundColor": "#2A5235", "paddingTop": "25px", "paddingBottom": "15px"
+        },
+        "body": {
+          "type": "box", "layout": "vertical",
+          "contents": [
+            {
+              "type": "box", "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "box", "layout": "vertical",
+                  "contents": [
+                    { "type": "text", "text": "活動日期", "color": "#FFFFFF88", "size": "xs", "align": "center" },
+                    { "type": "text", "text": datePart, "color": "#FFFFFF", "weight": "bold", "size": "md", "align": "center", "margin": "sm" }
+                  ]
+                },
+                {
+                  "type": "box", "layout": "vertical",
+                  "contents": [
+                    { "type": "text", "text": "體驗時間", "color": "#FFFFFF88", "size": "xs", "align": "center" },
+                    { "type": "text", "text": timePart.replace("~","-"), "color": "#FFFFFF", "weight": "bold", "size": "xs", "align": "center", "margin": "sm", "wrap": true }
+                  ]
+                }
+              ], "margin": "md"
+            },
+            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" },
+            {
+              "type": "box", "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "📍 活動地點", "color": "#FCD535", "size": "sm", "weight": "bold" },
+                { "type": "text", "text": "精選特配工作室（詳細地址依通知為主）", "color": "#FFFFFF", "size": "sm", "wrap": true, "margin": "xs" }
+              ], "margin": "lg"
+            },
+            {
+              "type": "box", "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "💰 上課費用 (現場繳費)", "color": "#FCD535", "size": "sm", "weight": "bold" },
+                { "type": "text", "text": `NT$ ${price}`, "color": "#FCD535", "size": "xxl", "weight": "bold", "margin": "xs" }
+              ], "margin": "md"
+            }
+          ],
+          "backgroundColor": "#2A5235", "paddingTop": "10px", "paddingBottom": "20px"
+        },
+        "footer": {
+          "type": "box", "layout": "vertical",
+          "contents": [
+            { "type": "text", "text": "💡 提醒：活動前 15 分鐘到場報到及繳費。", "color": "#333333", "size": "xs", "wrap": true, "align": "center" }
+          ],
+          "backgroundColor": "#FFFFFF", "paddingAll": "15px"
+        }
+      };
+    }
+
+    // 當手機瀏覽器完全載入網頁時，立刻呼叫 LIFF 初始化
+    window.onload = () => { initLiff(); };
+  </script>
+</body>
+</html>
