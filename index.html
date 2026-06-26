@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>馥韻容光｜活動報名</title>
+  <title>馥韻容光</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -16,7 +16,7 @@
     
     <div class="p-5 border-b border-gray-100 text-center relative mt-2">
       <div class="text-xs text-gray-400 mb-1">unikorn0112.github.io</div>
-      <h1 class="text-2xl font-bold text-gray-800 tracking-wide">全齡溫養課程報名</h1>
+      <h1 class="text-2xl font-bold text-gray-800 tracking-wide">馥韻容光｜課程報名</h1>
       <button onclick="liff.closeWindow()" class="absolute right-6 top-6 text-gray-400 hover:text-gray-600 text-xl transition">✕</button>
     </div>
 
@@ -68,25 +68,22 @@
 
   <script>
     // ⚙️ 【核心配置區】
-    // 這裡已經帶入你專屬的 GAS API 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbysgp4uHsRaGjII7g9SuFwED4p6iXIdj7nNEEI8Bs_pGvl6tue8Y-YXIXUnmN8TcNA/exec";
-    
-    // ⚠️ 備忘：請在取得 LINE Developer 後台的 LIFF ID 後，填入下方引號中
     const LIFF_ID = "2010515725-s5OM7bqy";
 
-    let allCourses = []; // 用於暫存從後台撈過來的所有完整場次清單
-    let userLineId = ""; // 用於儲存點開表單的學員 LINE userId
+    let allCourses = []; 
+    let userLineId = ""; 
 
     // 【1. 初始化 LIFF SDK】
     async function initLiff() {
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-          liff.login(); // 如果學員沒登入，自動導向 LINE 登入
+          liff.login(); 
         } else {
           const profile = await liff.getProfile();
-          userLineId = profile.userId; // 成功抓取學員的唯一 LINE ID
-          fetchActiveCourses(); // 驗證成功後，立刻執行向 GAS 撈取當前上架場次
+          userLineId = profile.userId; 
+          fetchActiveCourses(); 
         }
       } catch (error) {
         console.error("LIFF 初始化失敗", error);
@@ -96,12 +93,11 @@
     // 【2. 從 GAS 撈取上架中的場次資料】
     async function fetchActiveCourses() {
       try {
-        // 向 GAS 發送請求，並告知只需要「狀態為上架」的課程
         const res = await fetch(`${GAS_URL}?action=getCourses&onlyActive=true`);
         const result = await res.json();
         if (result.success) {
-          allCourses = result.data; // 將拿到的資料存入陣列
-          renderCourseSelect();     // 執行渲染「報名課程」下拉選單
+          allCourses = result.data; 
+          renderCourseSelect();     
         }
       } catch (err) {
         alert("撈取線上場次清單失敗，請確認 GAS 是否有成功對外公開部署。");
@@ -111,7 +107,6 @@
     // 【3. 渲染『報名課程』下拉選單】
     function renderCourseSelect() {
       const courseSelect = document.getElementById('courseSelect');
-      // 使用 Set 機制過濾掉重複的課程名稱（例如有三場DIY課，選單裡只會出現一個項目）
       const uniqueTitles = [...new Set(allCourses.map(c => c.courseName))];
       
       uniqueTitles.forEach(title => {
@@ -122,12 +117,11 @@
       });
     }
 
-    // 【4. 連動觸發：當學員選好某個課程時，解鎖並渲染對應的『活動場次/時間』】
+    // 【4. 連動觸發場次選單】
     function handleCourseChange() {
       const selectedCourse = document.getElementById('courseSelect').value;
       const timeSelect = document.getElementById('timeSelect');
       
-      // 先清空場次選單的舊資料
       timeSelect.innerHTML = '<option value="">請選擇場次時間</option>';
       
       if (!selectedCourse) {
@@ -136,20 +130,19 @@
         return;
       }
 
-      // 篩選出符合該課程名稱的所有可選時間
       const filteredTimes = allCourses.filter(c => c.courseName === selectedCourse);
       filteredTimes.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.courseTime;
-        opt.dataset.price = c.price; // 將該場次的金額藏在 option 的 dataset 屬性中，方便後續產出憑證
+        opt.dataset.price = c.price; 
         opt.textContent = `${c.courseTime} (NT$ ${c.price})`;
         timeSelect.appendChild(opt);
       });
-      timeSelect.disabled = false; // 解鎖選單
+      timeSelect.disabled = false; 
       timeSelect.classList.remove('bg-gray-100');
     }
 
-    // 【5. 按鈕點擊：處理表單提交、寫入試算表並發送 Flex Message 憑證】
+    // 【5. 按鈕點擊：處理表單提交】
     async function submitForm() {
       const name = document.getElementById('userName').value.trim();
       const phone = document.getElementById('userPhone').value.trim();
@@ -157,29 +150,24 @@
       const timeSelect = document.getElementById('timeSelect');
       const courseTime = timeSelect.value;
       
-      // 簡單的前端防呆驗證
       if (!name || !phone || !courseName || !courseTime) {
         alert("請確認所有報名資料欄位皆已輸入或選擇！");
         return;
       }
 
-      // 取得剛才隱藏在屬性中的場次價格
       const selectedOption = timeSelect.options[timeSelect.selectedIndex];
       const price = selectedOption.dataset.price || "520";
 
-      // 進入讀取狀態，防範學員手速太快重複點擊按鈕
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";
 
-      // 打包準備發送給 GAS POST API 的 JSON 格式
       const payload = {
         action: "submitRegistration",
         data: { name, phone, courseName, courseTime, lineId: userLineId }
       };
 
       try {
-        // A. 第一步：將資料送回 GAS 寫入 Google 試算表
         const res = await fetch(GAS_URL, {
           method: "POST",
           body: JSON.stringify(payload)
@@ -187,10 +175,8 @@
         const result = await res.json();
 
         if (result.success) {
-          // B. 第二步：試算表存檔成功後，動態生成符合參考圖二視覺的植物系深綠色憑證
           const flexPayload = generateFlexPayload(courseName, courseTime, price);
           
-          // C. 第三步：呼叫 LIFF SDK，直接以學員身分在 LINE 對話視窗發送這張憑證
           await liff.sendMessages([
             {
               type: "flex",
@@ -199,7 +185,6 @@
             }
           ]);
           
-          // 發送成功後關閉 LIFF 視窗，讓學員完美回歸聊天室並看見憑證
           liff.closeWindow(); 
         } else {
           alert("報名系統暫時無回應，請重新點擊提交。");
@@ -214,12 +199,11 @@
       }
     }
 
-    // 【6. Flex Message 樣式模板產出器（對齊參考圖二設計）】
+    // 【6. Flex Message 樣式模板產出器】
     function generateFlexPayload(title, timeStr, price) {
       let datePart = "當日";
       let timePart = timeStr;
       
-      // 將時間字串自動切分（例如後台設定："4/19 (日) 14:00 ~ 16:00" ➡️ 切出日期與時間區段）
       if(timeStr.includes(" ")) {
         const parts = timeStr.split(" ");
         datePart = parts[0] + (parts[1] ? " " + parts[1] : "");
@@ -289,7 +273,6 @@
       };
     }
 
-    // 當手機瀏覽器完全載入網頁時，立刻呼叫 LIFF 初始化
     window.onload = () => { initLiff(); };
   </script>
 </body>
