@@ -17,7 +17,7 @@
     <div class="p-5 border-b border-gray-100 text-center relative mt-2">
       <div class="text-xs text-gray-400 mb-1">unikorn0112.github.io</div>
       <h1 class="text-2xl font-bold text-gray-800 tracking-wide">馥韻容光｜課程報名</h1>
-      </div>
+    </div>
 
     <div class="p-6 space-y-6 flex-grow">
       
@@ -191,9 +191,18 @@
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";
 
+      // ✨ 優化修正點：補上 payment 欄位，打包格式與新 GAS 全面完美對齊
       const payload = {
         action: "submitRegistration",
-        data: { name, phone, courseName, courseTime, lineId: userLineId }
+        data: { 
+          name: name, 
+          phone: phone, 
+          courseName: courseName, 
+          courseTime: courseTime, 
+          payment: "現場繳費",
+          price: price,
+          lineId: userLineId 
+        }
       };
 
       try {
@@ -222,7 +231,7 @@
         }
       } catch (err) {
         console.error(err);
-        alert("網路連線逾時，但資料可能已處理。請檢查 LINE 聊天室是否收到憑證。");
+        alert("網路連線逾時，但資料可能已處理。請檢查 LINE 聊天室是否收到憑證處理。");
         submitBtn.disabled = false;
         submitBtn.textContent = "確認提交";
       }
@@ -247,62 +256,4 @@
           "contents": [
             { "type": "text", "text": "活動憑證", "color": "#FFFFFFB3", "size": "sm", "align": "center" },
             { "type": "text", "text": "馥韻容光", "weight": "bold", "color": "#FFFFFF", "size": "xxl", "align": "center", "margin": "sm" },
-            { "type": "text", "text": `「 ${title} 」`, "color": "#FCD535", "size": "md", "align": "center", "margin": "md", "weight": "bold" },
-            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" }
-          ],
-          "backgroundColor": "#2A5235", "paddingTop": "25px", "paddingBottom": "15px"
-        },
-        "body": {
-          "type": "box", "layout": "vertical",
-          "contents": [
-            {
-              "type": "box", "layout": "horizontal",
-              "contents": [
-                {
-                  "type": "box", "layout": "vertical",
-                  "contents": [
-                    { "type": "text", "text": "活動日期", "color": "#FFFFFF88", "size": "xs", "align": "center" },
-                    { "type": "text", "text": datePart, "color": "#FFFFFF", "weight": "bold", "size": "md", "align": "center", "margin": "sm" }
-                  ]
-                },
-                {
-                  "type": "box", "layout": "vertical",
-                  "contents": [
-                    { "type": "text", "text": "體驗時間", "color": "#FFFFFF88", "size": "xs", "align": "center" },
-                    { "type": "text", "text": timePart.replace("~","-"), "color": "#FFFFFF", "weight": "bold", "size": "xs", "align": "center", "margin": "sm", "wrap": true }
-                  ]
-                }
-              ], "margin": "md"
-            },
-            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" },
-            {
-              "type": "box", "layout": "vertical",
-              "contents": [
-                { "type": "text", "text": "📍 活動地點", "color": "#FCD535", "size": "sm", "weight": "bold" },
-                { "type": "text", "text": "精選特配工作室（詳細地址依通知為主）", "color": "#FFFFFF", "size": "sm", "wrap": true, "margin": "xs" }
-              ], "margin": "lg"
-            },
-            {
-              "type": "box", "layout": "vertical",
-              "contents": [
-                { "type": "text", "text": "💰 上課費用 (現場繳費)", "color": "#FCD535", "size": "sm", "weight": "bold" },
-                { "type": "text", "text": `NT$ ${price}`, "color": "#FCD535", "size": "xxl", "weight": "bold", "margin": "xs" }
-              ], "margin": "md"
-            }
-          ],
-          "backgroundColor": "#2A5235", "paddingTop": "10px", "paddingBottom": "20px"
-        },
-        "footer": {
-          "type": "box", "layout": "vertical",
-          "contents": [
-            { "type": "text", "text": "💡 提醒：活動前 15 分鐘到場報到及繳費。", "color": "#333333", "size": "xs", "wrap": true, "align": "center" }
-          ],
-          "backgroundColor": "#FFFFFF", "paddingAll": "15px"
-        }
-      };
-    }
-
-    window.onload = () => { initLiff(); };
-  </script>
-</body>
-</html>
+            { "type": "text", "text": `「 ${title} 」`, "color": "#FCD535", "size": "md", "align": "center", "
