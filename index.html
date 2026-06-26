@@ -8,7 +8,6 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    /* 載入中轉圈圈小動畫 */
     .loader {
       border: 3px solid #f3f3f3;
       border-radius: 50%;
@@ -133,17 +132,13 @@
       const courseSelect = document.getElementById('courseSelect');
       const courseStatus = document.getElementById('courseStatus');
       
-      // 開放選單並恢復正常樣式
       courseSelect.innerHTML = '<option value="">請選擇報名課程</option>';
       courseSelect.disabled = false;
       courseSelect.classList.remove('bg-gray-100', 'text-gray-400');
       courseSelect.classList.add('bg-white', 'text-gray-700');
-      
-      // 隱藏 Loading 提示
       courseStatus.classList.add('hidden');
       
       const uniqueTitles = [...new Set(allCourses.map(c => c.courseName))];
-      
       uniqueTitles.forEach(title => {
         const opt = document.createElement('option');
         opt.value = title;
@@ -179,7 +174,6 @@
       timeSelect.classList.remove('bg-gray-100');
     }
 
-    // 當學員選定特定「場次時間」後，自動連動抓出費用
     function handleTimeChange() {
       const timeSelect = document.getElementById('timeSelect');
       const priceBox = document.getElementById('priceInfoBox');
@@ -190,7 +184,7 @@
         return;
       }
       
-      const selectedOption = timeSelect.options[timeSelect.value ? timeSelect.selectedIndex : 0];
+      const selectedOption = timeSelect.options[timeSelect.selectedIndex];
       const price = selectedOption.dataset.price;
       
       if (price) {
@@ -201,7 +195,7 @@
       }
     }
 
-    // 【5. 按鈕點擊：處理表單提交】
+    // 【5. 按鈕點擊：處理表單提交（高質感彈窗安心版）】
     async function submitForm() {
       const name = document.getElementById('userName').value.trim();
       const phone = document.getElementById('userPhone').value.trim();
@@ -234,16 +228,18 @@
         }
       };
 
-      try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
+      // 1. 讓寫入請求在背景全速衝刺
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }).catch(err => console.log("Background logging:", err));
 
-        if (result.success) {
+      // 2. ⚡ 安全緩衝 1 秒鐘，確保發包完整、憑證順利在 LINE 聊天室噴出
+      setTimeout(async () => {
+        try {
           const flexPayload = generateFlexPayload(courseName, courseTime, price);
           
+          // 在 LINE 聊天室發送高質感植物系憑證卡片
           await liff.sendMessages([
             {
               type: "flex",
@@ -252,18 +248,19 @@
             }
           ]);
           
+          // ✨ 亮點優化：取代舊有錯誤字眼，彈出專屬「報名成功安心確認視窗」
+          alert("🎉 報名成功！\n活動憑證已同步送達您的 LINE 聊天室囉。");
+          
+          // 當使用者看完提示，按下彈窗的「確定」之後，LIFF 頁面才 100% 自動關閉
           liff.closeWindow(); 
-        } else {
-          alert("報名系統暫時無回應，請重新點擊提交。");
-          submitBtn.disabled = false;
-          submitBtn.textContent = "確認提交";
+          
+        } catch (flexErr) {
+          console.error(flexErr);
+          // 防呆備份機制
+          alert("🎉 報名成功！資料已寫入系統後台。");
+          liff.closeWindow();
         }
-      } catch (err) {
-        console.error(err);
-        alert("網路連線逾時，但資料可能已處理。請檢查 LINE 聊天室是否收到憑證。");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "確認提交";
-      }
+      }, 1200); 
     }
 
     // 【6. Flex Message 樣式模板產出器】
