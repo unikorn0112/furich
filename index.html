@@ -8,6 +8,19 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    /* 載入中轉圈圈小動畫 */
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 3px solid #16a34a;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="bg-gray-900 bg-opacity-40 flex justify-center items-center min-h-screen p-4">
@@ -34,10 +47,16 @@
       </div>
 
       <div>
-        <label class="block text-gray-800 font-bold text-base mb-2">報名課程</label>
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-gray-800 font-bold text-base">報名課程</label>
+          <div id="courseStatus" class="flex items-center space-x-2 text-sm text-green-600">
+            <div class="loader"></div>
+            <span>線上場次載入中...</span>
+          </div>
+        </div>
         <div class="relative">
-          <select id="courseSelect" onchange="handleCourseChange()" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition appearance-none cursor-pointer">
-            <option value="">請選擇報名課程</option>
+          <select id="courseSelect" onchange="handleCourseChange()" class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-gray-400 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 transition appearance-none cursor-pointer" disabled>
+            <option value="">請稍候，正同步線上課程...</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
             ▼
@@ -73,7 +92,6 @@
 
   <script>
     // ⚙️ 【核心配置區】
-    // ⚠️ 請確保這串網址與你最新的「管理部署作業」中所複製出來的 Web App 網址百分之百一致！
     const GAS_URL = "https://script.google.com/macros/s/AKfycbysgp4uHsRaGjII7g9SuFwED4p6iXIdj7nNEEI8Bs_pGvl6tue8Y-YXIXUnmN8TcNA/exec";
     const LIFF_ID = "2010515725-s5OM7bqy";
 
@@ -106,15 +124,23 @@
           renderCourseSelect();     
         }
       } catch (err) {
-        alert("撈取線上場次清單失敗，請確認 GAS 是否有成功對外公開部署。");
+        document.getElementById('courseStatus').innerHTML = '<span class="text-red-500">同步失敗，請重開網頁</span>';
       }
     }
 
     // 【3. 渲染『報名課程』下拉選單】
     function renderCourseSelect() {
       const courseSelect = document.getElementById('courseSelect');
-      // 清空舊選單內容並補上預設提示
+      const courseStatus = document.getElementById('courseStatus');
+      
+      // 開放選單並恢復正常樣式
       courseSelect.innerHTML = '<option value="">請選擇報名課程</option>';
+      courseSelect.disabled = false;
+      courseSelect.classList.remove('bg-gray-100', 'text-gray-400');
+      courseSelect.classList.add('bg-white', 'text-gray-700');
+      
+      // 隱藏 Loading 提示
+      courseStatus.classList.add('hidden');
       
       const uniqueTitles = [...new Set(allCourses.map(c => c.courseName))];
       
@@ -164,7 +190,7 @@
         return;
       }
       
-      const selectedOption = timeSelect.options[timeSelect.selectedIndex];
+      const selectedOption = timeSelect.options[timeSelect.value ? timeSelect.selectedIndex : 0];
       const price = selectedOption.dataset.price;
       
       if (price) {
@@ -195,7 +221,6 @@
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";
 
-      // ✨ 修正優化點：補全數據包格式，全面與後端 8 欄位標準資料庫（Registrations）咬合
       const payload = {
         action: "submitRegistration",
         data: { 
