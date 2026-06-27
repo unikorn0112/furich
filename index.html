@@ -90,7 +90,6 @@
   </div>
 
   <script>
-    // ⚙️ 【核心配置區】
     const GAS_URL = "https://script.google.com/macros/s/AKfycbysgp4uHsRaGjII7g9SuFwED4p6iXIdj7nNEEI8Bs_pGvl6tue8Y-YXIXUnmN8TcNA/exec";
     const LIFF_ID = "2010515725-s5OM7bqy";
 
@@ -163,7 +162,7 @@
         const opt = document.createElement('option');
         opt.value = c.courseTime;
         opt.dataset.price = c.price; 
-        opt.dataset.location = c.location || "精選特配工作室（詳細地址依通知為主）"; // ✨ 注入動態地點數據
+        opt.dataset.location = c.location && c.location.trim() !== "" ? c.location : "精選特配工作室（詳細地址依通知為主）"; 
         opt.textContent = c.courseTime; 
         timeSelect.appendChild(opt);
       });
@@ -206,7 +205,7 @@
 
       const selectedOption = timeSelect.options[timeSelect.selectedIndex];
       const price = selectedOption.dataset.price || "0";
-      const location = selectedOption.dataset.location; // ✨ 動態抓取當前選擇場次的地點
+      const location = selectedOption.dataset.location; 
 
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
@@ -214,24 +213,14 @@
 
       const payload = {
         action: "submitRegistration",
-        data: { 
-          name: name, 
-          phone: phone, 
-          payment: "現場繳費",
-          courseName: courseName, 
-          courseTime: courseTime, 
-          price: price,
-          lineId: userLineId 
-        }
+        data: { name, phone, payment: "現場繳費", courseName, courseTime, price, lineId: userLineId }
       };
 
-      // 讓寫入請求在背景全速衝刺
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify(payload)
       }).catch(err => console.log("Background logging:", err));
 
-      // 安全緩衝 1.2 秒鐘，確保發包完整、憑證順利在 LINE 聊天室噴出
       setTimeout(async () => {
         try {
           const flexPayload = generateFlexPayload(courseName, courseTime, price, location);
@@ -244,18 +233,19 @@
             }
           ]);
           
-          alert("🎉 報名成功！\n活動憑證已同步送達您的 LINE 聊天室囉。");
+          // ✨ 調整點：在這裡修改你想要的彈出視窗成功文字！
+          alert("🎉 報名預約成功！\n專屬體驗憑證卡片已發送至您的 LINE 聊天室。");
           liff.closeWindow(); 
           
         } catch (flexErr) {
           console.error(flexErr);
+          // ✨ 調整點：防呆備份彈窗的文字修改
           alert("🎉 報名成功！");
           liff.closeWindow();
         }
       }, 1200); 
     }
 
-    // 【6. Flex Message 全新結構產出器】
     function generateFlexPayload(title, timeStr, price, locationStr) {
       return {
         "type": "bubble",
@@ -264,11 +254,9 @@
           "type": "box",
           "layout": "vertical",
           "contents": [
-            // ✨ 調整點 1：最上方第一行
             { "type": "text", "text": "馥韻容光｜活動憑證", "color": "#FFFFFFB3", "size": "sm", "align": "center" },
-            // ✨ 調整點 2：最上方第二行（拿掉「」外框符號）
             { "type": "text", "text": title, "weight": "bold", "color": "#FCD535", "size": "xl", "align": "center", "margin": "md", "wrap": true },
-            { "type": "navigator", "color": "#FFFFFF33", "margin": "lg" }
+            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" }
           ],
           "backgroundColor": "#2A5235",
           "paddingTop": "25px",
@@ -278,23 +266,16 @@
           "type": "box",
           "layout": "vertical",
           "contents": [
-            // ✨ 調整點 3：中間區塊第一行（固定文字標題）
             { "type": "text", "text": "活動日期｜時間", "color": "#FFFFFF88", "size": "xs", "align": "center" },
-            // ✨ 調整點 4：中間區塊第二行（帶入真實報名時間）
             { "type": "text", "text": timeStr, "color": "#FFFFFF", "weight": "bold", "size": "md", "align": "center", "margin": "sm", "wrap": true },
             { "type": "separator", "color": "#FFFFFF33", "margin": "xl" },
             {
               "type": "box",
               "layout": "vertical",
               "contents": [
-                // ✨ 調整點 5：最下區塊第一行
                 { "type": "text", "text": "💰 課程費用（現場繳費）", "color": "#FFFFFF88", "size": "xs" },
-                // ✨ 調整點 6：最下區塊第二行（實際費用）
                 { "type": "text", "text": `NT$ ${price}`, "color": "#FCD535", "size": "xl", "weight": "bold", "margin": "xs" },
-                
-                // ✨ 調整點 7：最下區塊第三行
                 { "type": "text", "text": "📍 活動地點", "color": "#FFFFFF88", "size": "xs", "margin": "md" },
-                // ✨ 調整點 8：最下區塊第四行（動態抓取 Lovable 傳遞過來的實際場次地點）
                 { "type": "text", "text": locationStr, "color": "#FFFFFF", "size": "sm", "wrap": true, "margin": "xs" }
               ],
               "margin": "lg"
@@ -308,7 +289,6 @@
           "type": "box",
           "layout": "vertical",
           "contents": [
-            // ✨ 調整點 9：下方白邊區塊
             { "type": "text", "text": "💡 提醒：活動前 15 分鐘到場及繳費。", "color": "#333333", "size": "xs", "wrap": true, "align": "center" }
           ],
           "backgroundColor": "#FFFFFF",
