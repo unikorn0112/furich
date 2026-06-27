@@ -152,11 +152,11 @@
       const selectedCourse = document.getElementById('courseSelect').value;
       const timeSelect = document.getElementById('timeSelect');
       const priceBox = document.getElementById('priceInfoBox');
-      const locationBox = document.getElementById('locationInfoBox'); // ✨ 抓取地點方塊
+      const locationBox = document.getElementById('locationInfoBox'); 
       
       timeSelect.innerHTML = '<option value="">請選擇場次時間</option>';
       priceBox.classList.add('hidden'); 
-      locationBox.classList.add('hidden'); // 重設時隱藏地點方塊
+      locationBox.classList.add('hidden'); 
       
       if (!selectedCourse) {
         timeSelect.disabled = true;
@@ -177,16 +177,14 @@
       timeSelect.classList.remove('bg-gray-100');
     }
 
-    // ✨【修正點 2/2：JavaScript 修正 `handleTimeChange` 連動邏輯】
     function handleTimeChange() {
       const timeSelect = document.getElementById('timeSelect');
       const priceBox = document.getElementById('priceInfoBox');
       const displayPrice = document.getElementById('displayPrice');
       
-      const locationBox = document.getElementById('locationInfoBox'); // ✨ 地點方塊
-      const displayLocation = document.getElementById('displayLocation'); // ✨ 地址文字
+      const locationBox = document.getElementById('locationInfoBox'); 
+      const displayLocation = document.getElementById('displayLocation'); 
       
-      // 如果沒選時間，兩個方塊都隱藏
       if (!timeSelect.value) {
         priceBox.classList.add('hidden');
         locationBox.classList.add('hidden');
@@ -195,9 +193,8 @@
       
       const selectedOption = timeSelect.options[timeSelect.selectedIndex];
       const price = selectedOption.dataset.price;
-      const location = selectedOption.dataset.location; // ✨ 讀取選中場次綁定的地點
+      const location = selectedOption.dataset.location; 
       
-      // 1. 渲染價格
       if (price) {
         displayPrice.textContent = `NT$ ${price}`; 
         priceBox.classList.remove('hidden');       
@@ -205,7 +202,6 @@
         priceBox.classList.add('hidden');
       }
 
-      // 2. 渲染地點（緊跟在價格下方顯示）
       if (location) {
         displayLocation.textContent = location;
         locationBox.classList.remove('hidden');
@@ -275,9 +271,9 @@
           "type": "box",
           "layout": "vertical",
           "contents": [
-            { "type": "text", "text": "馥韻容光｜活動憑證", "color": "#FFFFFFB3", "size": "sm", "align": "center" },
+            { "type": "text", "text": "馥韻容光｜活動憑證", "color": "#FFFFFFB3", "size": "lg", "align": "center", "weight": "bold" },
             { "type": "text", "text": title, "weight": "bold", "color": "#FCD535", "size": "xl", "align": "center", "margin": "md", "wrap": true },
-            { "type": "navigator", "color": "#FFFFFF33", "margin": "lg" }
+            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" }
           ],
           "backgroundColor": "#2A5235",
           "paddingTop": "25px",
@@ -287,9 +283,10 @@
           "type": "box",
           "layout": "vertical",
           "contents": [
-            { "type": "text", "text": "活動日期｜時間", "color": "#FFFFFF88", "size": "xs", "align": "center" },
-            { "type": "text", "text": timeStr, "color": "#FFFFFF", "weight": "bold", "size": "md", "align": "center", "margin": "sm", "wrap": true },
-            { "type": "navigator", "color": "#FFFFFF33", "margin": "xl" },
+            // ✨【修正點：將 size: "x1" 改回正常的 "xl"】
+            { "type": "text", "text": "活動日期｜時間", "color": "#FFFFFF88", "size": "xl", "align": "center", "weight": "bold" },
+            { "type": "text", "text": timeStr, "color": "#FFFFFF", "weight": "bold", "size": "xl", "align": "center", "margin": "sm", "wrap": true },
+            { "type": "separator", "color": "#FFFFFF33", "margin": "xl" },
             {
               "type": "box",
               "layout": "vertical",
