@@ -80,6 +80,11 @@
         <span class="text-xl font-black text-green-700" id="displayPrice">NT$ 0</span>
       </div>
 
+      <div id="locationInfoBox" class="hidden bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col transition-all duration-200">
+        <span class="text-gray-700 font-bold text-base mb-1">📍 活動地點</span>
+        <span class="text-gray-600 text-sm leading-relaxed" id="displayLocation"></span>
+      </div>
+
     </div>
 
     <div class="p-6 pt-2 mb-2">
@@ -147,9 +152,11 @@
       const selectedCourse = document.getElementById('courseSelect').value;
       const timeSelect = document.getElementById('timeSelect');
       const priceBox = document.getElementById('priceInfoBox');
+      const locationBox = document.getElementById('locationInfoBox'); // ✨ 抓取地點方塊
       
       timeSelect.innerHTML = '<option value="">請選擇場次時間</option>';
       priceBox.classList.add('hidden'); 
+      locationBox.classList.add('hidden'); // 重設時隱藏地點方塊
       
       if (!selectedCourse) {
         timeSelect.disabled = true;
@@ -170,24 +177,40 @@
       timeSelect.classList.remove('bg-gray-100');
     }
 
+    // ✨【修正點 2/2：JavaScript 修正 `handleTimeChange` 連動邏輯】
     function handleTimeChange() {
       const timeSelect = document.getElementById('timeSelect');
       const priceBox = document.getElementById('priceInfoBox');
       const displayPrice = document.getElementById('displayPrice');
       
+      const locationBox = document.getElementById('locationInfoBox'); // ✨ 地點方塊
+      const displayLocation = document.getElementById('displayLocation'); // ✨ 地址文字
+      
+      // 如果沒選時間，兩個方塊都隱藏
       if (!timeSelect.value) {
         priceBox.classList.add('hidden');
+        locationBox.classList.add('hidden');
         return;
       }
       
       const selectedOption = timeSelect.options[timeSelect.selectedIndex];
       const price = selectedOption.dataset.price;
+      const location = selectedOption.dataset.location; // ✨ 讀取選中場次綁定的地點
       
+      // 1. 渲染價格
       if (price) {
         displayPrice.textContent = `NT$ ${price}`; 
         priceBox.classList.remove('hidden');       
       } else {
         priceBox.classList.add('hidden');
+      }
+
+      // 2. 渲染地點（緊跟在價格下方顯示）
+      if (location) {
+        displayLocation.textContent = location;
+        locationBox.classList.remove('hidden');
+      } else {
+        locationBox.classList.add('hidden');
       }
     }
 
@@ -203,13 +226,13 @@
         return;
       }
 
-      const selectedOption = timeSelect.options[timeSelect.selectedIndex];
-      const price = selectedOption.dataset.price || "0";
-      const location = selectedOption.dataset.location; 
-
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";
+
+      const selectedOption = timeSelect.options[timeSelect.selectedIndex];
+      const price = selectedOption.dataset.price || "0";
+      const location = selectedOption.dataset.location; 
 
       const payload = {
         action: "submitRegistration",
@@ -233,13 +256,11 @@
             }
           ]);
           
-          // ✨ 調整點：在這裡修改你想要的彈出視窗成功文字！
           alert("🎉 報名預約成功！\n專屬體驗憑證卡片已發送至您的 LINE 聊天室。");
           liff.closeWindow(); 
           
         } catch (flexErr) {
           console.error(flexErr);
-          // ✨ 調整點：防呆備份彈窗的文字修改
           alert("🎉 報名成功！");
           liff.closeWindow();
         }
@@ -256,7 +277,7 @@
           "contents": [
             { "type": "text", "text": "馥韻容光｜活動憑證", "color": "#FFFFFFB3", "size": "sm", "align": "center" },
             { "type": "text", "text": title, "weight": "bold", "color": "#FCD535", "size": "xl", "align": "center", "margin": "md", "wrap": true },
-            { "type": "separator", "color": "#FFFFFF33", "margin": "lg" }
+            { "type": "navigator", "color": "#FFFFFF33", "margin": "lg" }
           ],
           "backgroundColor": "#2A5235",
           "paddingTop": "25px",
@@ -268,7 +289,7 @@
           "contents": [
             { "type": "text", "text": "活動日期｜時間", "color": "#FFFFFF88", "size": "xs", "align": "center" },
             { "type": "text", "text": timeStr, "color": "#FFFFFF", "weight": "bold", "size": "md", "align": "center", "margin": "sm", "wrap": true },
-            { "type": "separator", "color": "#FFFFFF33", "margin": "xl" },
+            { "type": "navigator", "color": "#FFFFFF33", "margin": "xl" },
             {
               "type": "box",
               "layout": "vertical",
